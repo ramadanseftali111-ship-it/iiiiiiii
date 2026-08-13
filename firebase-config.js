@@ -1,6 +1,6 @@
 // ============================================
 // FIREBASE YAPILANDIRMA DOSYASI
-// Otomatik oluşturuldu: 04.08.2026 06:48:27
+// Otomatik oluşturuldu: 13.08.2026 23:12:09
 // ============================================
 
 // Firebase Configuration
