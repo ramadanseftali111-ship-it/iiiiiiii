@@ -1260,7 +1260,9 @@ function validateForm() {
                 // TikTok InitiateCheckout
                 if (typeof ttq !== 'undefined' && fiyat > 0) {
                     ttq.track('InitiateCheckout', {
+                        content_id: secimNum.toString(),
                         content_name: isim,
+                        content_type: 'product',
                         value: fiyat,
                         currency: 'TRY',
                         quantity: secimNum
@@ -2283,7 +2285,9 @@ function updateBorder(selectedId) {
             // TikTok AddToCart
             if (typeof ttq !== 'undefined' && fiyat > 0) {
                 ttq.track('AddToCart', {
+                    content_id: selectedId.toString(),
                     content_name: isim,
+                    content_type: 'product',
                     value: fiyat,
                     currency: 'TRY',
                     quantity: selectedId
@@ -2600,7 +2604,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // TikTok ViewContent
                 if (typeof ttq !== 'undefined' && fiyat > 0) {
                     ttq.track('ViewContent', {
+                        content_id: urunNo.toString(),
                         content_name: urunAdi + ' - ' + paketIsim,
+                        content_type: 'product',
                         value: fiyat,
                         currency: 'TRY'
                     });
