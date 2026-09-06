@@ -1,15 +1,15 @@
 // ============================================
 // FIREBASE YAPILANDIRMA DOSYASI
-// Otomatik oluşturuldu: 13.08.2026 23:12:09
+// Otomatik oluşturuldu: 13.08.2026 23:00:24
 // ============================================
 
 // Firebase Configuration
 var firebaseConfig = {
-    apiKey: "AIzaSyDurAad1UeBOfKGiGrYzWoYeaM8kfyMqK0",
-    authDomain: "hizlikargo-93a30.firebaseapp.com",
-    databaseURL: "https://hizlikargo-93a30-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "hizlikargo-93a30",
-    storageBucket: "hizlikargo-93a30.appspot.com",
+    apiKey: "AIzaSyBiEXcIGsBTCHpuFtQMTDU-uYsuxvASR8I",
+    authDomain: "ramadan-seftali.firebaseapp.com",
+    databaseURL: "https://ramadan-seftali-default-rtdb.firebaseio.com",
+    projectId: "ramadan-seftali",
+    storageBucket: "ramadan-seftali.appspot.com",
     messagingSenderId: "",
     appId: "",
     measurementId: ""

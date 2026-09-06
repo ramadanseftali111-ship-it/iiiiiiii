@@ -29,45 +29,7 @@
     console.log('✅ TikTok Pixel aktif:', tiktokPixelId);
 })();
 
-// Meta Pixel Event Fonksiyonları
-function fireMetaLeadEvent(value) {
-    if (typeof fbq !== 'undefined') {
-        fbq('track', 'Lead', { value: value || 0, currency: 'TRY' });
-        console.log('✅ Meta Lead event - Değer:', value);
-    }
-}
-
-function fireTikTokSubmitFormEvent(value) {
-    if (window.tiktokPixelId && typeof ttq !== 'undefined') {
-        ttq.track('SubmitForm');
-        ttq.track('CompletePayment', { value: value || 0, currency: 'TRY' });
-        console.log('✅ TikTok SubmitForm/CompletePayment event');
-    }
-}
-
-function fireAddToCart(contentName, contentId, value, quantity) {
-    if (typeof fbq !== 'undefined') {
-        fbq('track', 'AddToCart', {
-            content_name: contentName || 'Ürün',
-            content_ids: [contentId || '1'],
-            content_type: 'product',
-            value: value || 0,
-            currency: 'TRY',
-            quantity: quantity || 1
-        });
-        console.log('✅ Meta AddToCart event');
-    }
-}
-
-function fireInitiateCheckout(value) {
-    if (typeof fbq !== 'undefined') {
-        fbq('track', 'InitiateCheckout', {
-            value: value || 0,
-            currency: 'TRY'
-        });
-        console.log('✅ Meta InitiateCheckout event');
-    }
-}
+// Meta & TikTok Pixel eventleri inline olarak tetikleniyor (head'de fonksiyon gereksiz)
 </script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1536611277664502&ev=PageView&noscript=1"/></noscript>
 <!-- End Meta Pixel Code -->
@@ -1223,6 +1185,45 @@ function scrollToForm() {
 }
 
 function validateForm() {
+    // 💳 META & TIKTOK INITIATECHECKOUT EVENT (Sipariş Ver Butonuna Tıklayınca)
+    try {
+        var seciliPaket = document.querySelector('input[name="urunSecim"]:checked');
+        if (seciliPaket) {
+            var secimNum = parseInt(seciliPaket.value);
+            var fiyatElement = document.getElementById('urun' + secimNum + 'FiyatDisplay');
+            var isimElement = document.getElementById('urun' + secimNum + 'IsimDisplay');
+            
+            if (fiyatElement && isimElement) {
+                var fiyat = parseFloat(fiyatElement.textContent.replace(/[^0-9]/g, '')) || 0;
+                var isim = isimElement.textContent || (secimNum + ' Adet');
+                
+                // Meta InitiateCheckout
+                if (typeof fbq !== 'undefined' && fiyat > 0) {
+                    fbq('track', 'InitiateCheckout', {
+                        content_name: isim,
+                        value: fiyat,
+                        currency: 'TRY',
+                        num_items: secimNum
+                    });
+                    console.log('✅ Meta InitiateCheckout event:', isim, '-', fiyat, 'TRY');
+                }
+                
+                // TikTok InitiateCheckout
+                if (typeof ttq !== 'undefined' && fiyat > 0) {
+                    ttq.track('InitiateCheckout', {
+                        content_name: isim,
+                        value: fiyat,
+                        currency: 'TRY',
+                        quantity: secimNum
+                    });
+                    console.log('✅ TikTok InitiateCheckout event:', isim, '-', fiyat, 'TRY');
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ InitiateCheckout event hatası:', e);
+    }
+    
     let isValid = true;
     
     // Ad Soyad kontrolü
@@ -1386,6 +1387,9 @@ function validateForm() {
                 birimFiyat: birimFiyat,
                 timestamp: Date.now()
             };
+            
+            // Sipariş ID'yi window'a kaydet (TikTok duplicate kontrolü için)
+            window._currentOrderId = yeniSiparis.siparisNo;
             
             database.ref(SITE_ID + '/siparisler').push(yeniSiparis);
             
@@ -1552,6 +1556,37 @@ function showSuccessModal(fiyat) {
     if (typeof fbq !== 'undefined' && fiyat) {
         fbq('track', 'Purchase', { value: fiyat, currency: 'TRY' });
         console.log('✅ Meta Purchase event tetiklendi (Teşekkür kartında) - Değer:', fiyat);
+    }
+    
+    // 🎯 TEŞEKKÜR KARTINDA TIKTOK COMPLETEPAYMENT EVENT TETİKLE (DUPLICATE KORUMALI)
+    if (typeof ttq !== 'undefined' && fiyat) {
+        // Sipariş ID'yi al (timestamp-based unique ID)
+        var currentOrderId = window._currentOrderId || null;
+        
+        if (currentOrderId) {
+            // Daha önce gönderilen siparişleri kontrol et
+            var sentOrders = JSON.parse(localStorage.getItem('_tiktok_sent_orders') || '[]');
+            
+            if (sentOrders.indexOf(currentOrderId) === -1) {
+                // Henüz gönderilmemiş, gönder
+                ttq.track('CompletePayment', { value: fiyat, currency: 'TRY' });
+                console.log('✅ TikTok CompletePayment event tetiklendi - Değer:', fiyat, 'Sipariş:', currentOrderId);
+                
+                // Gönderildi olarak işaretle
+                sentOrders.push(currentOrderId);
+                localStorage.setItem('_tiktok_sent_orders', JSON.stringify(sentOrders));
+                
+                // 30 günden eski kayıtları temizle (localStorage şişmesin)
+                if (sentOrders.length > 100) {
+                    sentOrders = sentOrders.slice(-50); // Son 50 siparişi tut
+                    localStorage.setItem('_tiktok_sent_orders', JSON.stringify(sentOrders));
+                }
+            } else {
+                console.log('⚠️ TikTok CompletePayment zaten gönderildi, duplicate engellendi:', currentOrderId);
+            }
+        } else {
+            console.warn('⚠️ Sipariş ID bulunamadı, TikTok CompletePayment gönderilemedi');
+        }
     }
     
     // 8 saniye sonra kapat
@@ -2195,6 +2230,43 @@ function updateBorder(selectedId) {
         }
     }
     
+    // 🛒 META & TIKTOK ADDTOCART EVENT (Paket Seçildiğinde)
+    try {
+        var fiyatElement = document.getElementById('urun' + selectedId + 'FiyatDisplay');
+        var isimElement = document.getElementById('urun' + selectedId + 'IsimDisplay');
+        
+        if (fiyatElement && isimElement) {
+            var fiyat = parseFloat(fiyatElement.textContent.replace(/[^0-9]/g, '')) || 0;
+            var isim = isimElement.textContent || (selectedId + ' Adet');
+            
+            // Meta AddToCart
+            if (typeof fbq !== 'undefined' && fiyat > 0) {
+                fbq('track', 'AddToCart', {
+                    content_name: isim,
+                    content_ids: [selectedId.toString()],
+                    content_type: 'product',
+                    value: fiyat,
+                    currency: 'TRY',
+                    quantity: selectedId
+                });
+                console.log('✅ Meta AddToCart event:', isim, '-', fiyat, 'TRY');
+            }
+            
+            // TikTok AddToCart
+            if (typeof ttq !== 'undefined' && fiyat > 0) {
+                ttq.track('AddToCart', {
+                    content_name: isim,
+                    value: fiyat,
+                    currency: 'TRY',
+                    quantity: selectedId
+                });
+                console.log('✅ TikTok AddToCart event:', isim, '-', fiyat, 'TRY');
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ AddToCart event hatası:', e);
+    }
+    
     // Show color and size options for selected item
     toggleOptions(selectedId);
 }
@@ -2471,6 +2543,46 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ÜRÜN BİLGİLERİNİ YÜKLE
     yukleUrunBilgileriCustomer();
+    
+    // 👁️ META & TIKTOK VIEWCONTENT EVENT (Sayfa Yüklendiğinde)
+    setTimeout(function() {
+        try {
+            var ilkUrun = document.querySelector('input[name="urunSecim"]:checked');
+            var urunNo = ilkUrun ? parseInt(ilkUrun.value) : 1;
+            var fiyatElement = document.getElementById('urun' + urunNo + 'FiyatDisplay');
+            var isimElement = document.getElementById('urun' + urunNo + 'IsimDisplay');
+            var urunAdi = localStorage.getItem(getAdminKey('genel_urun_adi')) || 'Ürün';
+            
+            if (fiyatElement) {
+                var fiyat = parseFloat(fiyatElement.textContent.replace(/[^0-9]/g, '')) || 0;
+                var paketIsim = isimElement ? isimElement.textContent : (urunNo + ' Adet');
+                
+                // Meta ViewContent
+                if (typeof fbq !== 'undefined' && fiyat > 0) {
+                    fbq('track', 'ViewContent', {
+                        content_name: urunAdi + ' - ' + paketIsim,
+                        content_ids: [urunNo.toString()],
+                        content_type: 'product',
+                        value: fiyat,
+                        currency: 'TRY'
+                    });
+                    console.log('✅ Meta ViewContent event:', urunAdi, '-', fiyat, 'TRY');
+                }
+                
+                // TikTok ViewContent
+                if (typeof ttq !== 'undefined' && fiyat > 0) {
+                    ttq.track('ViewContent', {
+                        content_name: urunAdi + ' - ' + paketIsim,
+                        value: fiyat,
+                        currency: 'TRY'
+                    });
+                    console.log('✅ TikTok ViewContent event:', urunAdi, '-', fiyat, 'TRY');
+                }
+            }
+        } catch (e) {
+            console.warn('⚠️ ViewContent event hatası:', e);
+        }
+    }, 1500);
     
     // Hızlı temizlik kaldırıldı - toggleOptions fonksiyonu zaten doğru kontrol yapıyor
     

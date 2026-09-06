@@ -315,6 +315,21 @@ function toggleLeftDrawer(){
   <div style="font-size:12px;color:#666;margin-top:5px;">Bu metin Google arama sonuçlarında görünecek. Ürün hakkında çekici bir açıklama yazın.</div>
 </div>
 
+<!-- PIXEL AYARLARI -->
+<h3 style="color:#FF6B6B;font-weight:900;margin-bottom:15px;margin-top:30px;border-bottom:2px solid #FF6B6B;padding-bottom:10px;">📊 PIXEL AYARLARI</h3>
+
+<div style="margin-bottom:25px;">
+  <label style="display:block;font-weight:700;margin-bottom:8px;color:#333;font-size:14px;">📘 Meta Pixel ID:</label>
+  <input type="text" id="metaPixelInput" placeholder="Meta Pixel ID (opsiyonel)" style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:14px;background:#fff;color:#333;font-weight:600;box-sizing:border-box;" onchange="saveMetaPixelId()" onkeyup="saveMetaPixelId()">
+  <div style="font-size:12px;color:#666;margin-top:5px;">Meta (Facebook) Pixel ID'nizi buraya girin. Boş bırakırsanız Meta eventi gönderilmez.</div>
+</div>
+
+<div style="margin-bottom:25px;">
+  <label style="display:block;font-weight:700;margin-bottom:8px;color:#333;font-size:14px;">🎵 TikTok Pixel ID:</label>
+  <input type="text" id="tiktokPixelInput" placeholder="TikTok Pixel ID (opsiyonel)" style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:14px;background:#fff;color:#333;font-weight:600;box-sizing:border-box;" onchange="saveTikTokPixelId()" onkeyup="saveTikTokPixelId()">
+  <div style="font-size:12px;color:#666;margin-top:5px;">TikTok Pixel ID'nizi buraya girin. Boş bırakırsanız TikTok eventi gönderilmez.</div>
+</div>
+
 
 
 <button onclick="openRenkModal()" style="width:100%;background:#000;color:#fff;border:none;padding:15px;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;margin-bottom:10px;">
@@ -3226,6 +3241,7 @@ window.addEventListener('DOMContentLoaded', function() {
     setTimeout(loadUrunDurumlari, 100);
     loadGenelUrunAdi(); // Genel ürün adını yükle
     loadSeoAciklamasi(); // SEO açıklamasını yükle
+    loadPixelIds(); // Pixel ID'leri yükle
     
     // Sayfa yüklendiğinde aktif renk/beden listesini oluştur
     setTimeout(function() {
@@ -3274,6 +3290,47 @@ function loadSeoAciklamasi() {
     if (textarea) {
         textarea.value = savedSeoAciklama;
         console.log('📋 SEO açıklaması yüklendi: ' + savedSeoAciklama);
+    }
+}
+
+// PIXEL ID FONKSİYONLARI
+function saveMetaPixelId() {
+    var pixelId = document.getElementById('metaPixelInput').value.trim();
+    if (pixelId) {
+        localStorage.setItem('__META_PIXEL_ID__', pixelId);
+        console.log('💾 Meta Pixel ID kaydedildi: ' + pixelId);
+    } else {
+        localStorage.removeItem('__META_PIXEL_ID__');
+        console.log('🗑️ Meta Pixel ID silindi');
+    }
+}
+
+function saveTikTokPixelId() {
+    var pixelId = document.getElementById('tiktokPixelInput').value.trim();
+    if (pixelId) {
+        localStorage.setItem('__TIKTOK_PIXEL_ID__', pixelId);
+        console.log('💾 TikTok Pixel ID kaydedildi: ' + pixelId);
+    } else {
+        localStorage.removeItem('__TIKTOK_PIXEL_ID__');
+        console.log('🗑️ TikTok Pixel ID silindi');
+    }
+}
+
+function loadPixelIds() {
+    var metaPixelId = localStorage.getItem('__META_PIXEL_ID__');
+    var tiktokPixelId = localStorage.getItem('__TIKTOK_PIXEL_ID__');
+    
+    var metaInput = document.getElementById('metaPixelInput');
+    var tiktokInput = document.getElementById('tiktokPixelInput');
+    
+    if (metaInput && metaPixelId) {
+        metaInput.value = metaPixelId;
+        console.log('📋 Meta Pixel ID yüklendi: ' + metaPixelId);
+    }
+    
+    if (tiktokInput && tiktokPixelId) {
+        tiktokInput.value = tiktokPixelId;
+        console.log('📋 TikTok Pixel ID yüklendi: ' + tiktokPixelId);
     }
 }
 
